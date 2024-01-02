@@ -1,18 +1,17 @@
  /* File name: STM32_Project_Game_Tetris
  *
- * Description:xây dựng game tetris trên LCD
+ * Description: Xây d?ng game tetris trên LCD
  *
  *
  * Last Changed By:  $Author: $ VTQUAN & BMNGOC
  * Revision:         $Revision: $
- * Last Changed:     $Date: $December 25, 2023
+ * Last Changed:     $Date: $December 28, 2023
  *
  * Code sample:
  ******************************************************************************/
 /******************************************************************************/
 /*                              INCLUDE FILES                                 */
 /******************************************************************************/
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +25,7 @@
 #include <stm32f401re_rcc.h>
 #include "stm32f401re_syscfg.h"
 #include "stm32f401re_exti.h"
+#include <utilities.h>
 
 
 /******************************************************************************/
@@ -58,6 +58,7 @@ ucg_t ucg;
 static int x_axis = 10;
 static uint32_t idTimer = NO_TIMER;
 uint32_t idTimerStopGame = NO_TIMER;
+uint32_t timeRepeat = 500;
 uint8_t eCurrentState;
 static int size = 5;
 static int currentX = 10;
@@ -92,7 +93,7 @@ void startFallingBlockTimer(int block[4][4]);
 void handleFullRows(void);
 void checkForGameOver(void);
 void updateScore(void);
-int CalculateBlockMaxWidth(int block[4][4], int x0);
+int calculateBlockMaxWidth(int block[4][4], int x0);
 int calculateBlockWidth(int block[4][4]);
 void rotateCurrentBlock(void);
 
@@ -101,7 +102,7 @@ static void initB2ButtonInterrupt(void);
 static void initB3ButtonInterrupt(void);
 static void initB4ButtonInterrupt(void);
 
-/* Block Init**************************************************************/
+/* Definitions for various block types */
 static int block_T1[4][4] =
 {
 	{0,1,0,0},
@@ -399,6 +400,22 @@ static void initB4ButtonInterrupt(void) {
 }
 
 /**
+ * @func   delayMs
+ * @brief  Delay for a specified number of milliseconds.
+ * @param  milliseconds: The duration of the delay in milliseconds
+ * @retval None
+ */
+void delayMs(uint32_t milliseconds) {
+    // Calculate the number of cycles needed for the delay
+    uint32_t cycles = (50000000 / 1000) * milliseconds;
+
+    // Simple loop-based delay
+    for (uint32_t i = 0; i < cycles; i++) {
+        // Do nothing
+    }
+}
+
+/**
  * @func   loadConfiguration
  * @brief  Initializes the configuration for the Tetris game.
  * @param  None
@@ -406,8 +423,8 @@ static void initB4ButtonInterrupt(void) {
  */
 void loadConfiguration(void) {
 	ucg_DrawFrame(&ucg, 0, 0, 62, 122);					// Draw a frame for the game area
-	ucg_DrawString(&ucg, 65, 12, 0, "Tetris Game");		// Display the Tetris Game title
-	ucg_DrawString(&ucg, 65, 48, 0, "Score: ");			// Display the initial score
+	ucg_DrawString(&ucg, 65, 15, 0, "Teris Game");		// Display the Tetris Game title
+	ucg_DrawString(&ucg, 65, 50, 0, "Score: ");			// Display the initial score
 }
 
 /**
@@ -443,7 +460,9 @@ int (*block_I[])[4] = {block_I1, block_I2};
  * @retval None
  */
 void chooseBlock(void) {
+    // Generate a random index for the block type
     int randomBlockIndex = LightSensor_MeasureUseDMAMode() % 19;
+    // Point to the selected random block type
     int (*randomBlock)[4] = blockTypes[randomBlockIndex];
     blockIndex = randomBlockIndex;
 	// Copy the selected block to the nextBlock array
@@ -472,6 +491,7 @@ void initializeCurrentBlock(void) {
  */
 void drawBlockOnScreen(int x, int y,  int block[4][4]) {
 	ucg_SetColor(&ucg, 0, 0, 255, 255);
+    // Iterate through the block and draw filled boxes on the screen where the block is present
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++) {
 			if(block[i][j] == 1) {
@@ -493,6 +513,7 @@ void drawBlockOnScreen(int x, int y,  int block[4][4]) {
  */
 void eraseBlockOnScreen(int x, int y, int block[4][4]) {
 	ucg_SetColor(&ucg, 0, 0, 0, 0);
+    // Iterate through the block and draw filled boxes with the background color to erase the block
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++) {
 			if(block[i][j] == 1) {
@@ -503,6 +524,7 @@ void eraseBlockOnScreen(int x, int y, int block[4][4]) {
 		}
 	}
 }
+
 
 /**
  * @func   checkForCollisions
@@ -538,6 +560,7 @@ int checkForCollisions(int x, int y, int block[4][4]) {
  * @retval None
  */
 void fixBlockOnScreen(int x, int y, int block[4][4]) {
+    // Iterate through the block and update the screen array to fix the block
 	for(int i = 0; i < 4; i++) {
 		for(int j = 0; j < 4; j++) {
 			if(block[i][j] == 1){
@@ -570,14 +593,16 @@ void updateScore(){
  */
 void handleFullRows(){
 	ucg_SetColor(&ucg, 0, 0, 0, 0);
-
+    // Iterate through the screen to find full rows and update the score
 	for(int i = 0; i < SCREEN_HEIGHT; i++){
-
 		for(int j = 0; j < SCREEN_WIDTH; j++){
 			if(screen[i][j] == 1){
 				checkRow++;
 
 				if(checkRow == SCREEN_WIDTH){
+					if (timeRepeat > 0){
+						timeRepeat -= 20;
+					}
 					// Update score
 					score+=5;
 					// Erase the full row
@@ -588,7 +613,7 @@ void handleFullRows(){
 						screen[i][k] = 0;
 					}
 
-					// Draw the remaining blocks above the cleared row
+					// Shift blocks above the cleared row down
 					ucg_SetColor(&ucg, 0, 0, 0, 0);
 					for(int ii = 4; ii <= i; ii++){
 						for(int jj = 0; jj < SCREEN_WIDTH; jj++) {
@@ -600,10 +625,10 @@ void handleFullRows(){
 						}
 					}
 
-					// Shift the blocks above the clears row down
+					// Update the screen array by shifting blocks down
 					for(int new_height = i; new_height >= 5; new_height--){
 						for(int new_width = SCREEN_WIDTH - 1; new_width >= 0; new_width--){
-							screen[new_height][new_width] = screen[new_height - 1][new_width];//neu day man hinh thi code nay sai}
+							screen[new_height][new_width] = screen[new_height - 1][new_width];
 						}
 					}
 
@@ -646,6 +671,7 @@ void checkForGameOver(){
 	}
 }
 
+
 /**
  * @func   handleFallingBlock
  * @brief  Handle the falling and placement of a block in the game, including collision detection and game state updates.
@@ -654,6 +680,7 @@ void checkForGameOver(){
  */
 void handleFallingBlock(int block[4][4]){
 	drawBlockOnScreen(currentX, currentY, block);
+	delayMs(100);
 	handleFullRows();
 	// Check for collisions with the block below
 	if(!checkForCollisions(currentX, currentY + size, block)) {
@@ -677,13 +704,13 @@ void handleFallingBlock(int block[4][4]){
 		checkForGameOver();
 	}
 	// Update the minx and maxx values based on block width and position
-	minx = (CalculateBlockMaxWidth(block, x_axis) - calculateBlockWidth(block))*size;
-	maxx = CalculateBlockMaxWidth(block, x_axis)*size;
+	minx = (calculateBlockMaxWidth(block, x_axis) - calculateBlockWidth(block))*size;
+	maxx = calculateBlockMaxWidth(block, x_axis)*size;
 	// Update the currentX position if it changed
 	if(x_axis != currentX) {
 		currentX = x_axis;
 	}
-	// Update the score display
+	 // Update the score display
 	updateScore();
 }
 
@@ -699,19 +726,19 @@ void startFallingBlockTimer(int block[4][4]) {
 		TimerStop(idTimer);
 	}
 	// Start a timer to handle the falling block at a specified interval
-	idTimer = TimerStart("Fall", 500, TIMER_REPEAT_FOREVER, (void*) handleFallingBlock, block);
+	idTimer = TimerStart("Fall", timeRepeat, TIMER_REPEAT_FOREVER, (void*) handleFallingBlock, block);
 }
 
-//Measure the distance of the blocks to the left and right borders so that the blocks do not go beyond the screen
 /**
- * @func   InterruptPA4_Init
- * @brief  Init Interrupt
- * @param  None
- * @retval None
+ * @func   calculateBlockMaxWidth
+ * @brief  Calculate the maximum width of a block based on its 2D array representation.
+ * @param  block: 2D array representing the block
+ * @param  x0: X-coordinate of the leftmost column of the block
+ * @retval Maximum width of the block
  */
-int CalculateBlockMaxWidth(int block[4][4], int x0) {
+int calculateBlockMaxWidth(int block[4][4], int x0) {
     int max_width = -1;
-
+    // Iterate through the block and calculate the maximum width
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (block[i][j] == 1) {
@@ -722,7 +749,6 @@ int CalculateBlockMaxWidth(int block[4][4], int x0) {
             }
         }
     }
-
     return max_width - abs(x0) + 1;
 }
 
@@ -734,7 +760,7 @@ int CalculateBlockMaxWidth(int block[4][4], int x0) {
  */
 int calculateBlockWidth(int block[4][4]) {
     int width = 0;
-
+    // Iterate through the block and calculate the width of each row
     for (int i = 0; i < 4; i++) {
         int rowWidth = 0;
         for (int j = 0; j < 4; j++) {
@@ -742,6 +768,7 @@ int calculateBlockWidth(int block[4][4]) {
                 rowWidth++;
             }
         }
+        // Update the width if the current row's width is greater
         if (rowWidth > width) {
             width = rowWidth;
         }
@@ -757,10 +784,14 @@ int calculateBlockWidth(int block[4][4]) {
  * @retval None
  */
 void rotateCurrentBlock(void) {
+    // Erase the current block before rotation
+	eraseBlockOnScreen(currentX, currentY, block);
+    // Calculate the next rotation index
 	int nextRotation = (currentRotation + 1)%4;
 	int tempBlock[4][4];
 	// Determine block type and perform rotation
 	if (blockIndex >= 0 && blockIndex < 4) {
+        // Rotate the block type T
 		blockIndex = (blockIndex + currentRotation)%4;
 	    int (*rotBlock)[4] = block_T[blockIndex];
 	    if (!checkForCollisions(currentX, currentY, rotBlock)) {
@@ -779,6 +810,7 @@ void rotateCurrentBlock(void) {
 	}
 	// Determine block type and perform rotation
 	if (blockIndex >= 4 && blockIndex < 8) {
+        // Rotate the block type J
 		blockIndex = (blockIndex - 4 + currentRotation)%4;
 	    int (*rotBlock)[4] = block_J[blockIndex];
 	    if (!checkForCollisions(currentX, currentY, rotBlock)) {
@@ -798,6 +830,7 @@ void rotateCurrentBlock(void) {
 	}
 	// Determine block type and perform rotation
 	if (blockIndex >= 8 && blockIndex < 12) {
+        // Rotate the block type Z
 		blockIndex = (blockIndex - 8 + currentRotation)%4;
 	    int (*rotBlock)[4] = block_Z[blockIndex];
 	    if (!checkForCollisions(currentX, currentY, rotBlock)) {
@@ -817,6 +850,7 @@ void rotateCurrentBlock(void) {
 	}
 	// Determine block type and perform rotation
 	if (blockIndex >= 12 && blockIndex < 16) {
+        // Rotate the block type L
 		blockIndex = (blockIndex - 12 + currentRotation)%4;
 	    int (*rotBlock)[4] = block_L[blockIndex];
 	    if (!checkForCollisions(currentX, currentY, rotBlock)) {
@@ -836,6 +870,7 @@ void rotateCurrentBlock(void) {
 	}
 	// Determine block type and perform rotation
 	if (blockIndex >= 16 && blockIndex < 18) {
+        // Rotate the block type I
 		blockIndex = (blockIndex - 16 + currentRotation)%2;
 		int (*rotBlock)[4] = block_I[blockIndex];
 		if (!checkForCollisions(currentX, currentY, rotBlock)) {
@@ -854,7 +889,6 @@ void rotateCurrentBlock(void) {
 		blockIndex += 16;
 		}
 }
-
 
 /**
  * @func   EXTI3_IRQHandler
@@ -907,7 +941,6 @@ void EXTI4_IRQHandler(void) {
     EXTI_ClearITPendingBit(EXTI_Line4);
 }
 
-
 /**
  * @func   EXTI5_IRQHandler
  * @brief  Interrupt Service Routine for handling Button B1 to rotate the current block.
@@ -917,7 +950,7 @@ void EXTI4_IRQHandler(void) {
 void EXTI9_5_IRQHandler(void) {
     if (EXTI_GetFlagStatus(EXTI_Line5) == SET) {
         // Rotate the current block when Button B1 is pressed
-        rotateCurrentBlock();
+    	rotateCurrentBlock();
     }
     // Clear the EXTI line 5 pending bit
     EXTI_ClearITPendingBit(EXTI_Line5);

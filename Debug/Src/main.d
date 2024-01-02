@@ -14,7 +14,8 @@ Src/main.o: ../Src/main.c \
  D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_gpio.h \
  D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_rcc.h \
  D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_syscfg.h \
- D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_exti.h
+ D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_exti.h \
+ D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Utilities/utilities.h
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/misc.h:
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/CMSIS/Include/stm32f401re.h:
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/CMSIS/Include/core_cm4.h:
@@ -31,3 +32,4 @@ D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_rcc.h:
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_syscfg.h:
 D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Drivers/STM32F401RE_StdPeriph_Driver/inc/stm32f401re_exti.h:
+D:/20231/TTKT-Lumi/SDK_1.0.3_NUCLEO-F401RE/shared/Utilities/utilities.h:
